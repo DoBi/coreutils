@@ -424,10 +424,20 @@ fn copy_files_into_dir(files: &[PathBuf], target_dir: &PathBuf, b: &Behavior) ->
         return 1;
     }
 
+    println!("target_dir: {}", target_dir.display());
+
     let mut all_successful = true;
     for sourcepath in files.iter() {
+        println!("sourcepath: {}", sourcepath.display());
         let targetpath = match sourcepath.as_os_str().to_str() {
-            Some(name) => target_dir.join(name),
+            Some(name) => {
+                let source = Path::new(name);
+                uu_cp::localize_to_target(
+                    source.parent().unwrap_or(source),
+                    Path::new(name),
+                    target_dir.as_path())
+                    .unwrap()
+            }
             None => {
                 show_error!(
                     "cannot stat '{}': No such file or directory",
@@ -438,6 +448,8 @@ fn copy_files_into_dir(files: &[PathBuf], target_dir: &PathBuf, b: &Behavior) ->
                 continue;
             }
         };
+
+        println!("TargetPath: {}", targetpath.display());
 
         if copy(sourcepath, &targetpath, b).is_err() {
             all_successful = false;
